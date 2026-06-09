@@ -71,6 +71,14 @@ def write_ref_summary_by_pad(df, output_path, group_col="Pad name"):
         pads = df[group_col].unique() if group_col in df.columns else ["Summary"]
         for pad in pads:
             subset = df[df[group_col] == pad] if group_col in df.columns else df
+            subset = subset.dropna(axis=1, how='all')
+            # Restore original column order from PAD metadata if available
+            pad_col_orders = df.attrs.get('_pad_col_orders', {})
+            if pad in pad_col_orders:
+                orig = pad_col_orders[pad]
+                meta = {'WaferID', 'LotID', 'Recipe', 'PadName'}
+                ordered = [c for c in meta if c in subset.columns] + [c for c in orig if c in subset.columns and c not in meta]
+                subset = subset[ordered]
             subset.to_excel(writer, sheet_name=str(pad)[:31], index=False)
             _style_header(writer.sheets[str(pad)[:31]], subset.columns)
             _auto_width(writer.sheets[str(pad)[:31]], subset)

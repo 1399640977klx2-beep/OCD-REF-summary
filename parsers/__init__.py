@@ -13,16 +13,32 @@ def parse_files(filepaths, vendor, error_handler=None):
     parser = PARSER_MAP.get(vendor)
     if parser is None:
         raise ValueError(f"Unknown vendor: {vendor}")
+
     dfs = []
+    pad_combined = {}
+
     for fp in filepaths:
         try:
-            df = parser(fp)
-            if df is not None and len(df) > 0:
-                dfs.append(df)
+            result = parser(fp)
+            if isinstance(result, dict):
+                for pad, df in result.items():
+                    if pad not in pad_combined:
+                        pad_combined[pad] = []
+                    pad_combined[pad].append(df)
+            elif result is not None and len(result) > 0:
+                dfs.append(result)
             else:
-                msg = f"{str(fp.split(chr(92))[-1])}: empty result"
+                msg = f"{fp.split(chr(92))[-1]}: empty result"
                 if error_handler: error_handler(msg)
         except Exception as e:
-            msg = f"{str(fp.split(chr(92))[-1])}: {e}"
+            msg = f"{fp.split(chr(92))[-1]}: {e}"
             if error_handler: error_handler(msg)
+
+    if pad_combined:
+        import pandas as pd
+        result = {}
+        for pad, pad_dfs in pad_combined.items():
+            result[pad] = pd.concat(pad_dfs, ignore_index=True)
+        return result
+
     return dfs if dfs else None

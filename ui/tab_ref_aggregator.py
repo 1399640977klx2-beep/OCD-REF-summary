@@ -12,7 +12,9 @@ from PyQt5.QtCore import Qt
 
 from parsers import parse_files
 from utils.file_utils import scan_data_files
+from utils.excel_writer import _style_header, _auto_width
 from utils.excel_writer import write_ref_summary_excel, write_ref_summary_by_pad
+import pandas as pd
 
 
 class RefAggregatorTab(QWidget):
@@ -20,6 +22,7 @@ class RefAggregatorTab(QWidget):
         super().__init__(parent)
         self.main_window = parent
         self.current_df = None
+        self._pad_data = None
         self._init_ui()
 
     def _init_ui(self):
@@ -134,7 +137,13 @@ class RefAggregatorTab(QWidget):
 
         # Combine DataFrames
         import pandas as pd
-        self.current_df = pd.concat(dfs, ignore_index=True)
+        if isinstance(dfs, dict):
+            self._pad_data = dfs
+            self.current_df = pd.concat(list(dfs.values()), ignore_index=True)
+            self.info_text.append(f'成功解析 {len(dfs)} 个 PAD: {list(dfs.keys())}')
+        else:
+            self._pad_data = None
+            self.current_df = pd.concat(dfs, ignore_index=True)
         self.info_text.append(f'总数据行数: {len(self.current_df)}')
 
         wafer_count = self.current_df.get('WaferID', self.current_df.get('Wafer_ID', pd.Series())).nunique()
@@ -170,9 +179,17 @@ class RefAggregatorTab(QWidget):
             'Excel Files (*.xlsx)'
         )
         if filepath:
-            if vendor == 'PMISH' and 'Pad name' in self.current_df.columns:
-                write_ref_summary_by_pad(self.current_df, filepath, group_col='Pad name')
+            if self._pad_data is not None:
+                with pd.ExcelWriter(filepath, engine='openpyxl') as writer:
+                    for pad_name, pad_df in self._pad_data.items():
+                        pad_df.to_excel(writer, sheet_name=str(pad_name)[:31], index=False)
+                        _style_header(writer.sheets[str(pad_name)[:31]], pad_df.columns)
+                        _auto_width(writer.sheets[str(pad_name)[:31]], pad_df)
             else:
-                write_ref_summary_excel(self.current_df, filepath, vendor)
+                pad_col = 'Pad name' if 'Pad name' in self.current_df.columns else ('PadName' if 'PadName' in self.current_df.columns else None)
+                if vendor in ('PMISH', 'KLA') and pad_col:
+                    write_ref_summary_by_pad(self.current_df, filepath, group_col=pad_col)
+                else:
+                    write_ref_summary_excel(self.current_df, filepath, vendor)
             QMessageBox.information(self, '导出成功', f'汇总结果已保存到:\n{filepath}')
             self.main_window.set_status(f'已导出: {filepath}')
