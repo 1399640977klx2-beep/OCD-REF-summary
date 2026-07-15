@@ -10,6 +10,7 @@ from ui.tab_ref_aggregator import RefAggregatorTab
 from ui.tab_match import MatchTab
 from ui.tab_wafer_map import WaferMapTab
 from ui.tab_folder_manager import FolderManagerTab
+from ui.tab_organize_spectra import OrganizeSpectraTab
 
 APP_NAME = 'OCD Toolbox'
 
@@ -18,7 +19,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle(APP_NAME)
-        self.resize(1400, 900)
+        self.resize(700, 500)
 
         self.last_directory = ''
 
@@ -36,11 +37,13 @@ class MainWindow(QMainWindow):
         self.tab_match = MatchTab(self)
         self.tab_map = WaferMapTab(self)
         self.tab_folder = FolderManagerTab(self)
+        self.tab_organize = OrganizeSpectraTab(self)
 
         self.tabs.addTab(self.tab_ref, 'REF 数据汇总')
         self.tabs.addTab(self.tab_match, 'Match 匹配')
-        self.tabs.addTab(self.tab_map, 'Wafer 地图')
+        self.tabs.addTab(self.tab_map, 'Wafer Map')
         self.tabs.addTab(self.tab_folder, '文件夹管理')
+        self.tabs.addTab(self.tab_organize, '光谱整理')
 
         self.setCentralWidget(self.tabs)
 

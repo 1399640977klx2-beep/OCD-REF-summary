@@ -1,4 +1,4 @@
-"""
+﻿"""
 Tab 1: REF Data Aggregation
 """
 import os
@@ -36,6 +36,7 @@ class RefAggregatorTab(QWidget):
         row1 = QHBoxLayout()
         row1.addWidget(QLabel('厂商:'))
         self.vendor_combo = QComboBox()
+        self.vendor_combo.setObjectName("cmbVendor")
         self.vendor_combo.addItems(['KLA', 'NOVA', 'PMISH'])
         row1.addWidget(self.vendor_combo)
 
@@ -44,7 +45,8 @@ class RefAggregatorTab(QWidget):
         row1.addWidget(self.browse_btn)
 
         self.folder_label = QLabel('未选择文件夹')
-        self.folder_label.setStyleSheet('color: gray;')
+        self.folder_label.setObjectName('folderLabel')
+        self.folder_label.setProperty('active', False)
         row1.addWidget(self.folder_label, 1)
 
         ctrl_layout.addLayout(row1)
@@ -56,12 +58,13 @@ class RefAggregatorTab(QWidget):
         self.parse_btn.clicked.connect(self._parse_data)
         row2.addWidget(self.parse_btn)
 
-        self.export_btn = QPushButton('导出汇总 Excel')
+        self.export_btn = QPushButton('导出汇总Excel')
         self.export_btn.setEnabled(False)
         self.export_btn.clicked.connect(self._export_excel)
         row2.addWidget(self.export_btn)
 
         self.progress_bar = QProgressBar()
+        self.progress_bar.setObjectName("progressBarRef")
         self.progress_bar.setVisible(False)
         row2.addWidget(self.progress_bar, 1)
 
@@ -72,13 +75,13 @@ class RefAggregatorTab(QWidget):
         # === Info Area ===
         self.info_text = QTextEdit()
         self.info_text.setReadOnly(True)
-        self.info_text.setMaximumHeight(80)
+        self.info_text.setObjectName("infoText")
         self.info_text.setPlaceholderText('解析信息将显示在这里...')
         layout.addWidget(self.info_text)
 
         # === Data Table Preview ===
-        table_label = QLabel('数据预览:')
-        table_label.setStyleSheet('font-weight: bold;')
+        table_label = QLabel('数据预览')
+        table_label.setObjectName('tablePreviewLabel')
         layout.addWidget(table_label)
 
         self.table = QTableWidget()
@@ -96,7 +99,9 @@ class RefAggregatorTab(QWidget):
         if directory:
             self.main_window.last_directory = directory
             self.folder_label.setText(directory)
-            self.folder_label.setStyleSheet('color: black;')
+            self.folder_label.setProperty('active', True)
+            self.folder_label.style().unpolish(self.folder_label)
+            self.folder_label.style().polish(self.folder_label)
             self.parse_btn.setEnabled(True)
             self.current_dir = directory
 
@@ -191,5 +196,7 @@ class RefAggregatorTab(QWidget):
                     write_ref_summary_by_pad(self.current_df, filepath, group_col=pad_col)
                 else:
                     write_ref_summary_excel(self.current_df, filepath, vendor)
-            QMessageBox.information(self, '导出成功', f'汇总结果已保存到:\n{filepath}')
+            QMessageBox.information(self, '导出成功', f'汇总结果已保存到\n{filepath}')
             self.main_window.set_status(f'已导出: {filepath}')
+
+

@@ -1,4 +1,4 @@
-"""
+﻿"""
 Tab 4: Folder Management
 Integrated from renamefolder.py and re_renamefolder.py
 """
@@ -28,13 +28,16 @@ class FolderManagerTab(QWidget):
 
         row1 = QHBoxLayout()
         row1.addWidget(QLabel("\u76ee\u6807\u6587\u4ef6\u5939:"))
-        self.folder_label = QLabel("\u672a\u9009\u62e9")
-        self.folder_label.setStyleSheet("color: gray;")
+        self.folder_label = QLabel("未选择")
+        self.folder_label.setObjectName("folderLabel")
+        self.folder_label.setProperty("active", False)
         row1.addWidget(self.folder_label, 1)
         self.browse_btn = QPushButton("\u9009\u62e9\u6587\u4ef6\u5939")
+        self.browse_btn.setObjectName("btnFolderBrowse")
         self.browse_btn.clicked.connect(self._browse)
         row1.addWidget(self.browse_btn)
         self.scan_btn = QPushButton("\u626b\u63cf\u6587\u4ef6\u5939")
+        self.scan_btn.setObjectName("btnFolderScan")
         self.scan_btn.setEnabled(False)
         self.scan_btn.clicked.connect(self._scan_folders)
         row1.addWidget(self.scan_btn)
@@ -42,6 +45,7 @@ class FolderManagerTab(QWidget):
 
         row2 = QHBoxLayout()
         self.auto_btn = QPushButton("\u81ea\u52a8\u91cd\u547d\u540d")
+        self.auto_btn.setObjectName("btnAutoRename")
         self.auto_btn.setEnabled(False)
         self.auto_btn.clicked.connect(self._auto_rename)
         row2.addWidget(self.auto_btn)
@@ -56,6 +60,7 @@ class FolderManagerTab(QWidget):
         left_l = QVBoxLayout(left_w)
         left_l.addWidget(QLabel("\u6587\u4ef6\u5939\u5217\u8868:"))
         self.folder_list = QListWidget()
+        self.folder_list.setObjectName("folderList")
         self.folder_list.itemClicked.connect(self._on_select)
         left_l.addWidget(self.folder_list)
         splitter.addWidget(left_w)
@@ -67,9 +72,11 @@ class FolderManagerTab(QWidget):
         right_l.addWidget(self.info)
         right_l.addWidget(QLabel("\u65b0\u524d\u7f00:"))
         self.prefix_edit = QLineEdit()
+        self.prefix_edit.setObjectName("editPrefix")
         self.prefix_edit.setPlaceholderText("\u8f93\u5165\u65b0\u524d\u7f00")
         right_l.addWidget(self.prefix_edit)
         self.apply_btn = QPushButton("\u5e94\u7528\u5230\u6b64\u9879")
+        self.apply_btn.setObjectName("btnApplyPrefix")
         self.apply_btn.setEnabled(False)
         self.apply_btn.clicked.connect(self._apply)
         right_l.addWidget(self.apply_btn)
@@ -77,8 +84,11 @@ class FolderManagerTab(QWidget):
         right_l.addWidget(QLabel("\u6279\u91cf\u66ff\u6362:"))
         bl = QHBoxLayout()
         self.find_e = QLineEdit(); self.find_e.setPlaceholderText("\u67e5\u627e")
+        self.find_e.setObjectName("editFind")
         self.repl_e = QLineEdit(); self.repl_e.setPlaceholderText("\u66ff\u6362\u4e3a")
+        self.repl_e.setObjectName("editReplace")
         self.batch_btn = QPushButton("\u66ff\u6362")
+        self.batch_btn.setObjectName("btnBatchReplace")
         self.batch_btn.clicked.connect(self._batch)
         bl.addWidget(self.find_e); bl.addWidget(self.repl_e); bl.addWidget(self.batch_btn)
         right_l.addLayout(bl)
@@ -89,9 +99,11 @@ class FolderManagerTab(QWidget):
 
         bl2 = QHBoxLayout()
         self.progress = QProgressBar()
+        self.progress.setObjectName("progressBarFolder")
         self.progress.setVisible(False)
         bl2.addWidget(self.progress, 1)
         self.exec_btn = QPushButton("\u6267\u884c\u91cd\u547d\u540d")
+        self.exec_btn.setObjectName("btnExecuteRename")
         self.exec_btn.setEnabled(False)
         self.exec_btn.clicked.connect(self._execute)
         bl2.addWidget(self.exec_btn)
@@ -105,7 +117,9 @@ class FolderManagerTab(QWidget):
             self.main_window.last_directory = d
             self.base_path = d
             self.folder_label.setText(d)
-            self.folder_label.setStyleSheet("color: black;")
+            self.folder_label.setProperty("active", True)
+            self.folder_label.style().unpolish(self.folder_label)
+            self.folder_label.style().polish(self.folder_label)
             self.scan_btn.setEnabled(True)
             self.auto_btn.setEnabled(True)
 
@@ -197,3 +211,6 @@ class FolderManagerTab(QWidget):
         self.progress.setVisible(False)
         QMessageBox.information(self, "Done", f"Success: {s}/{len(self.folder_data)}")
         self._scan_folders()
+
+
+

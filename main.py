@@ -1,4 +1,4 @@
-"""
+﻿"""
 OCD Toolbox - Main Entry Point
 """
 import sys
@@ -16,6 +16,15 @@ APP_NAME = 'OCD Toolbox'
 APP_VERSION = '1.0.0'
 
 
+def load_stylesheet(app):
+    """Load global QSS stylesheet for application-wide styling."""
+    qss_path = os.path.join(os.path.dirname(__file__), 'styles', 'main.qss')
+    if os.path.exists(qss_path):
+        with open(qss_path, 'r', encoding='utf-8') as f:
+            app.setStyleSheet(f.read())
+    return app
+
+
 def main():
     app = QApplication(sys.argv)
     app.setApplicationName(APP_NAME)
@@ -23,6 +32,7 @@ def main():
 
     # Set app style
     app.setStyle('Fusion')
+    load_stylesheet(app)
 
     window = MainWindow()
     window.show()
@@ -32,3 +42,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
