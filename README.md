@@ -1,11 +1,11 @@
 ﻿# OCD Toolbox
 
-半导体 OCD 量测建模辅助工具。PyQt5 桌面应用，六个标签页覆盖 REF 汇总、Match 匹配、Wafer 地图、文件夹管理、光谱整理。
+半导体 OCD 量测建模辅助工具。PyQt5 桌面应用，六个标签页覆盖 REF 汇总、Match 匹配、Wafer 地图、文件夹管理、光谱整理、数据透视表。
 
 ## 运行环境
 
 - Python 3.13 (conda: `loadref`)
-- PyQt5 + pandas + matplotlib + openpyxl + scipy
+- PyQt5 + pandas + numpy + matplotlib + scipy + openpyxl
 
 ## 启动
 
@@ -13,6 +13,8 @@
 conda activate loadref
 python main.py
 ```
+
+也可以直接双击 `run.bat`：首次启动会自动创建 `venv` 并安装 `requirements.txt` 中的依赖。
 
 ## 项目结构
 
@@ -26,6 +28,7 @@ OCD Toolbox/
 │   ├── tab_wafer_map.py          # Tab 3: Wafer 地图（按钮 → 原版窗口）
 │   ├── tab_folder_manager.py     # Tab 4: 文件夹管理
 │   ├── tab_organize_spectra.py   # Tab 5: 光谱整理
+│   ├── tab_pivot.py              # Tab 6: 数据透视表
 │   └── draw_wafer_map.py         # Tab 3 引用的原版 Wafer 地图代码
 ├── parsers/                      # 数据解析层
 │   ├── __init__.py               # 调度器 (parse_files, 支持 dict/DataFrame 返回)
@@ -35,8 +38,11 @@ OCD Toolbox/
 ├── utils/                        # 工具层
 │   ├── file_utils.py             # 文件扫描、WaferID 提取
 │   ├── excel_writer.py           # Excel 输出 (含多 Sheet 支持)
-│   └── excel_writer_match.py     # Match Sheet 生成 (openpyxl 公式/布局)
-└── data/                         # 测试数据
+│   ├── excel_writer_match.py     # Match Sheet 生成 (openpyxl 公式/布局)
+│   ├── organize_spectra.py       # 通用光谱整理引擎（可独立运行）
+│   ├── pivot_summary.py          # Tool/Product/Wafer 汇总
+│   └── pivot_tool_summary.py     # Product/Wafer × Tool 透视表
+└── data/                         # 测试数据（REF、Match、绘制数据透视表等）
 ```
 
 ## 六个标签页功能
@@ -66,9 +72,16 @@ OCD Toolbox/
 - 自动重命名 (timestamp → WaferID_timestamp) + 手动修正前缀 + 批量替换
 
 ### Tab 5: 光谱整理 ✅
-- 封装原版 `organize_spectra.py` 的 `organize()` 函数
-- 源/目标目录选择 + 产品正则 + 机台正则 + Dry Run 预览
+- 通用扫描源目录，通过可配置 Product / Machine / Wafer 正则识别并整理为 机台/产品/Wafer 层级
+- 源/目标目录选择 + 产品/机台/Wafer 正则 + Dry Run 预览 + Overwrite 覆盖
 - 执行日志实时显示在界面底部的文本区域
+
+### Tab 6: 数据透视表 ✅
+- 输入从 Excel/CSV 复制出来的数据文件，自动定位真实表头（`Die Seq` / `Wafer ID`）
+- 类型一：Tool/Product/Wafer 汇总，输出 PMISH/REF/Bias/oldBias 的 Mean 与 STD
+- 类型二：Product/Wafer × Tool 透视表，Tool 作为列，按参数分块输出
+- 参数名可配置，默认 `CD_Bot, CD_Top, HIGH, SPA, THK`
+- 缺失后缀列自动警告；输出 xlsx 由 `pandas + openpyxl` 生成
 
 ## Parser 实测
 
@@ -92,4 +105,7 @@ OCD Toolbox/
 | Match 公式列硬编码 | `mid_start` 动态计算 |
 | Bias 公式只取校准值 | 改为 `=校准-REF` |
 | Wafer Map 闪退 | 改回原版 `DrawMapSubWindow` 独立窗口 |
-| Tab 5 透视表不可用 | xlsxwriter 无 `add_pivot_table`，取消 Tab |
+| 透视表功能 | 改用 pandas + openpyxl 实现，新增 Tab 6 数据透视表 |
+| 光谱整理依赖 Data/Py test 旧脚本 | 重写为 `utils/organize_spectra.py` 通用正则扫描 |
+| 光谱整理无法覆盖旧文件 | `organize()` 增加 `overwrite` 参数，UI 增加勾选 |
+| run.bat 错误检测失效 | `%ERRORLEVEL%` 在括号块内提前展开，改为 `if errorlevel 1` |

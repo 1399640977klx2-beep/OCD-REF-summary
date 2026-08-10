@@ -1,10 +1,8 @@
 """
 Tab 6: Organize Spectra - wraps organize_spectra.py
 """
-import os
 import sys
 import re
-import shutil
 from pathlib import Path
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
@@ -13,11 +11,12 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 
-# Import organize logic from original script
-_data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                         "Data", "Py test")
-sys.path.insert(0, _data_dir)
-from organize_spectra import organize, profiles, DEFAULT_PRODUCT_PATTERN
+from utils.organize_spectra import (
+    organize,
+    DEFAULT_PRODUCT_PATTERN,
+    DEFAULT_MACHINE_PATTERN,
+    DEFAULT_WAFER_PATTERNS,
+)
 
 
 class OrganizeSpectraTab(QWidget):
@@ -68,13 +67,21 @@ class OrganizeSpectraTab(QWidget):
 
         r3b = QHBoxLayout()
         r3b.addWidget(QLabel("Machine Regex:"))
-        self.machine_re = QLineEdit("[A-Za-z]{3}\d{2}")
+        self.machine_re = QLineEdit(DEFAULT_MACHINE_PATTERN)
         r3b.addWidget(self.machine_re)
         s3l.addLayout(r3b)
+
+        r3c = QHBoxLayout()
+        r3c.addWidget(QLabel("Wafer Regex (comma separated):"))
+        self.wafer_re = QLineEdit(", ".join(DEFAULT_WAFER_PATTERNS))
+        r3c.addWidget(self.wafer_re)
+        s3l.addLayout(r3c)
 
         r4 = QHBoxLayout()
         self.dry_run_cb = QCheckBox("Dry Run (preview only)")
         r4.addWidget(self.dry_run_cb)
+        self.overwrite_cb = QCheckBox("Overwrite existing")
+        r4.addWidget(self.overwrite_cb)
         r4.addStretch()
         s3l.addLayout(r4)
 
@@ -128,17 +135,15 @@ class OrganizeSpectraTab(QWidget):
             self._check_ready()
 
     def _update_profiles(self, src_dir):
-        # Show which machine profiles will be used
+        # Show which machine folders are detected under the source
         try:
             p = Path(src_dir)
+            machine_pat = self.machine_re.text().strip() or DEFAULT_MACHINE_PATTERN
             found = []
             for entry in p.iterdir():
-                if entry.is_dir():
-                    for re_str, desc, _ in profiles:
-                        if re.match(re_str, entry.name):
-                            found.append(f"{entry.name} -> {desc}")
-                            break
-            self.profile_label.setText("Detected profiles:\n" + "\n".join(found))
+                if entry.is_dir() and re.search(machine_pat, entry.name):
+                    found.append(entry.name)
+            self.profile_label.setText("Detected machine folders:\n" + "\n".join(found))
         except Exception:
             self.profile_label.setText("")
 
@@ -154,11 +159,24 @@ class OrganizeSpectraTab(QWidget):
             return
 
         dry_run = self.dry_run_cb.isChecked()
+        overwrite = self.overwrite_cb.isChecked()
         product_pat = self.product_re.text().strip() or DEFAULT_PRODUCT_PATTERN
         product_re = re.compile(product_pat)
 
-        machine_pat = self.machine_re.text().strip() or "[A-Za-z]{3}\d{2}"
+        machine_pat = self.machine_re.text().strip() or DEFAULT_MACHINE_PATTERN
         machine_filters = [re.compile(machine_pat)]
+
+        wafer_text = self.wafer_re.text().strip()
+        if wafer_text:
+            wafer_patterns = [
+                re.compile(p.strip(), re.IGNORECASE)
+                for p in wafer_text.split(",")
+                if p.strip()
+            ]
+        else:
+            wafer_patterns = [
+                re.compile(p, re.IGNORECASE) for p in DEFAULT_WAFER_PATTERNS
+            ]
 
         self.progress.setVisible(True)
         self.progress.setValue(50)
@@ -171,7 +189,9 @@ class OrganizeSpectraTab(QWidget):
             old_stdout = sys.stdout
             sys.stdout = buf
 
-            organize(Path(src), Path(dst), product_re, machine_filters, dry_run=dry_run)
+            organize(Path(src), Path(dst), product_re, machine_filters,
+                     wafer_patterns=wafer_patterns, dry_run=dry_run,
+                     overwrite=overwrite)
 
             sys.stdout = old_stdout
             self.log.setText(buf.getvalue())

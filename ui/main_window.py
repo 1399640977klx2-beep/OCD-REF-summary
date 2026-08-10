@@ -11,6 +11,7 @@ from ui.tab_match import MatchTab
 from ui.tab_wafer_map import WaferMapTab
 from ui.tab_folder_manager import FolderManagerTab
 from ui.tab_organize_spectra import OrganizeSpectraTab
+from ui.tab_pivot import PivotTab
 
 APP_NAME = 'OCD Toolbox'
 
@@ -38,12 +39,14 @@ class MainWindow(QMainWindow):
         self.tab_map = WaferMapTab(self)
         self.tab_folder = FolderManagerTab(self)
         self.tab_organize = OrganizeSpectraTab(self)
+        self.tab_pivot = PivotTab(self)
 
         self.tabs.addTab(self.tab_ref, 'REF 数据汇总')
         self.tabs.addTab(self.tab_match, 'Match 匹配')
         self.tabs.addTab(self.tab_map, 'Wafer Map')
         self.tabs.addTab(self.tab_folder, '文件夹管理')
         self.tabs.addTab(self.tab_organize, '光谱整理')
+        self.tabs.addTab(self.tab_pivot, '数据透视表')
 
         self.setCentralWidget(self.tabs)
 

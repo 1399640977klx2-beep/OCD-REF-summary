@@ -1,4 +1,5 @@
 ﻿@echo off
+setlocal
 chcp 65001 >nul 2>&1
 cd /d "%~dp0"
 
@@ -10,7 +11,7 @@ echo ============================================
 
 :: --------------------  Check Python  --------------------
 where python >nul 2>&1
-if %ERRORLEVEL% neq 0 (
+if errorlevel 1 (
     echo [ERROR] Python is not found in PATH.
     echo         Please make sure Python is installed and added to PATH.
     pause
@@ -24,7 +25,7 @@ if exist "%VENV_DIR%\Scripts\activate.bat" (
 ) else (
     echo [INFO] No virtual environment detected, creating ...
     python -m venv "%VENV_DIR%"
-    if %ERRORLEVEL% neq 0 (
+    if errorlevel 1 (
         echo [ERROR] Failed to create virtual environment.
         pause
         exit /b 1
@@ -38,7 +39,7 @@ call "%VENV_DIR%\Scripts\activate.bat"
 if exist requirements.txt (
     echo [INFO] Installing dependencies from requirements.txt ...
     pip install -r requirements.txt
-    if %ERRORLEVEL% neq 0 (
+    if errorlevel 1 (
         echo [WARN] pip install encountered errors, trying to continue...
     )
 ) else (
