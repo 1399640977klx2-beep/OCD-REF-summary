@@ -5,7 +5,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
 from scipy.interpolate import griddata
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
+from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                              QFileDialog, QScrollArea, QComboBox, QLabel, QCheckBox,
                              QGroupBox, QGridLayout, QMessageBox, QMainWindow, QSpinBox,
                              QDoubleSpinBox, QFrame)
@@ -156,13 +156,25 @@ class DrawMapSubWindow(QMainWindow):
         self.selected_wafers = None  # 存储选中的wafer
         self.selected_params = None  # 存储选中的参数
         self.setWindowTitle("Draw Contour Maps")
-        self.setGeometry(100, 100, 1200, 800)
+        self._set_initial_geometry()
         self.initUI()
+
+    def _set_initial_geometry(self):
+        screen = QApplication.primaryScreen()
+        if screen is None:
+            self.setGeometry(100, 100, 1200, 800)
+            return
+
+        available = screen.availableGeometry()
+        width = min(1200, int(available.width() * 0.9))
+        height = min(800, int(available.height() * 0.9))
+        x = available.x() + max(0, (available.width() - width) // 2)
+        y = available.y() + max(0, (available.height() - height) // 2)
+        self.setGeometry(x, y, width, height)
 
     def initUI(self):
         # 创建中央部件
         central_widget = QWidget()
-        self.setCentralWidget(central_widget)
 
         main_layout = QVBoxLayout(central_widget)
 
@@ -319,7 +331,11 @@ class DrawMapSubWindow(QMainWindow):
         self.scroll_area.setWidget(self.scroll_content)
         main_layout.addWidget(self.scroll_area)
 
-        self.setLayout(main_layout)
+        self.outer_scroll = QScrollArea()
+        self.outer_scroll.setWidgetResizable(True)
+        self.outer_scroll.setFrameShape(QFrame.NoFrame)
+        self.outer_scroll.setWidget(central_widget)
+        self.setCentralWidget(self.outer_scroll)
 
     def open_data_selection(self):
         if self.df is None:

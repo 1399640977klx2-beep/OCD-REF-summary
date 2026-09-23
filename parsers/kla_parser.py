@@ -18,8 +18,8 @@ def parse_kla_file(filepath):
 
     pad_sections = {}
 
-    for site_idx in site_indices:
-        wafer_id = lot_id = recipe = pad_name = ''
+    for site_pos, site_idx in enumerate(site_indices):
+        wafer_id = lot_id = recipe = pad_name = slot = ''
         for j in range(site_idx - 1, -1, -1):
             l = lines[j].strip()
             if not l:
@@ -33,6 +33,8 @@ def parse_kla_file(filepath):
                 lot_id = l.split(',')[1].strip()
             elif l.startswith('RECIPE,'):
                 recipe = l.split(',')[1].strip()
+            elif l.startswith('SLOT,'):
+                slot = l.split(',')[1].strip()
             elif l.startswith('TEST LABEL,'):
                 pad_name = l.split(',')[1].strip()
                 # Continue up for more metadata but stop at data/cross-section boundary
@@ -52,11 +54,20 @@ def parse_kla_file(filepath):
                         lot_id = l2.split(',')[1].strip()
                     elif l2.startswith('RECIPE,'):
                         recipe = l2.split(',')[1].strip()
+                    elif l2.startswith('SLOT,'):
+                        slot = l2.split(',')[1].strip()
                 break
 
-        data_end = len(lines)
-        for j in range(site_idx + 1, len(lines)):
-            if not lines[j].strip():
+        if slot.isdigit() and len(slot) == 1:
+            slot = slot.zfill(2)
+
+        if wafer_id.strip().lower() == 'nowaferid':
+            wafer_id = f'{lot_id}#{slot}'
+
+        next_site_idx = site_indices[site_pos + 1] if site_pos + 1 < len(site_indices) else len(lines)
+        data_end = next_site_idx
+        for j in range(site_idx + 1, next_site_idx):
+            if not lines[j].strip().replace(',', '').strip():
                 data_end = j
                 break
 

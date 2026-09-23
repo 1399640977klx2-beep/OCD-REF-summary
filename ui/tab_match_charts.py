@@ -69,7 +69,8 @@ class MatchChartsTab(QWidget):
         self.bias_table = QTableWidget()
         self.bias_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.bias_table.setSelectionMode(QAbstractItemView.NoSelection)
-        self.bias_table.setMaximumHeight(150)
+        self.bias_table.setMinimumHeight(180)
+        self.bias_table.setMaximumHeight(220)
         bias_layout.addWidget(self.bias_table)
         bias_btns = QHBoxLayout()
         self.bias_all_btn = QPushButton("全选")
@@ -89,7 +90,8 @@ class MatchChartsTab(QWidget):
         self.headers_list = QListWidget()
         self.headers_list.setSelectionMode(
             QAbstractItemView.ExtendedSelection)
-        self.headers_list.setMaximumHeight(120)
+        self.headers_list.setMinimumHeight(180)
+        self.headers_list.setMaximumHeight(220)
         custom_layout.addWidget(self.headers_list)
 
         label_row = QHBoxLayout()

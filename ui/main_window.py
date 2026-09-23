@@ -2,7 +2,8 @@
 Main window with tabbed interface for OCD Toolbox.
 """
 from PyQt5.QtWidgets import (
-    QMainWindow, QTabWidget, QMessageBox, QStatusBar, QLabel
+    QMainWindow, QTabWidget, QMessageBox, QStatusBar, QLabel,
+    QScrollArea, QFrame
 )
 from PyQt5.QtCore import Qt
 
@@ -51,7 +52,13 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.tab_organize, '光谱整理')
         self.tabs.addTab(self.tab_pivot, '数据透视表')
 
-        self.setCentralWidget(self.tabs)
+        # Keep the tab widget at its useful size and expose scrollbars when
+        # the window is smaller than the active page's minimum size.
+        self.tabs_scroll = QScrollArea()
+        self.tabs_scroll.setWidgetResizable(True)
+        self.tabs_scroll.setFrameShape(QFrame.NoFrame)
+        self.tabs_scroll.setWidget(self.tabs)
+        self.setCentralWidget(self.tabs_scroll)
 
     def _init_statusbar(self):
         self.status_bar = QStatusBar()
