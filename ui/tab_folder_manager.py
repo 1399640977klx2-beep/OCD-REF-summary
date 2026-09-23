@@ -128,6 +128,8 @@ class FolderManagerTab(QWidget):
         self.folder_data = []
         self.folder_list.clear()
         p = re.compile(r"^(.+)_(\d{8}_\d{6})$")
+        xfp_pattern = re.compile(r"^XFP\d{5}\.\d{2}$")
+        wafer_pattern = re.compile(r"^X[A-Za-z0-9]{2}\d{3}#\d{2}$")
         for root, dirs, _ in os.walk(self.base_path):
             for dn in dirs:
                 m = p.match(dn)
@@ -137,6 +139,12 @@ class FolderManagerTab(QWidget):
                         "dt": m.group(2), "path": os.path.join(root, dn)
                     })
                     self.folder_list.addItem(f"{m.group(1)} | {m.group(2)}")
+                elif xfp_pattern.match(dn) or wafer_pattern.match(dn):
+                    self.folder_data.append({
+                        "orig": dn, "pref": dn, "new_pref": dn,
+                        "dt": "", "path": os.path.join(root, dn)
+                    })
+                    self.folder_list.addItem(dn)
         self.exec_btn.setEnabled(len(self.folder_data) > 0)
         if not self.folder_data:
             QMessageBox.information(self, "Info", "No matching folders found")
@@ -165,9 +173,21 @@ class FolderManagerTab(QWidget):
         idx = self.folder_list.row(item)
         if idx < len(self.folder_data):
             d = self.folder_data[idx]
-            self.info.setText(f"{d['pref']}_{d['dt']}")
+            self.info.setText(d["orig"])
             self.prefix_edit.setText(d["new_pref"])
             self.apply_btn.setEnabled(True)
+
+    @staticmethod
+    def _display_name(d):
+        if d["dt"]:
+            return f"{d['new_pref']} | {d['dt']}"
+        return d["new_pref"]
+
+    @staticmethod
+    def _target_name(d):
+        if d["dt"]:
+            return f"{d['new_pref']}_{d['dt']}"
+        return d["new_pref"]
 
     def _apply(self):
         idx = self.folder_list.currentRow()
@@ -176,7 +196,7 @@ class FolderManagerTab(QWidget):
         if np:
             self.folder_data[idx]["new_pref"] = np
             d = self.folder_data[idx]
-            self.folder_list.item(idx).setText(f"{np} | {d['dt']}")
+            self.folder_list.item(idx).setText(self._display_name(d))
 
     def _batch(self):
         f, r = self.find_e.text(), self.repl_e.text()
@@ -186,7 +206,7 @@ class FolderManagerTab(QWidget):
             np = d["new_pref"].replace(f, r)
             if np != d["new_pref"]:
                 self.folder_data[i]["new_pref"] = np
-                self.folder_list.item(i).setText(f"{np} | {d['dt']}")
+                self.folder_list.item(i).setText(self._display_name(d))
                 c += 1
         QMessageBox.information(self, "Done", f"Updated {c} prefixes")
 
@@ -194,7 +214,7 @@ class FolderManagerTab(QWidget):
         if not self.folder_data: return
         names = {}
         for d in self.folder_data:
-            nn = f"{d['new_pref']}_{d['dt']}"
+            nn = self._target_name(d)
             if nn in names:
                 QMessageBox.warning(self, "Error", f"Duplicate: {nn}"); return
             names[nn] = True
@@ -203,7 +223,7 @@ class FolderManagerTab(QWidget):
         s = 0
         for i, d in enumerate(self.folder_data):
             self.progress.setValue(i+1)
-            nn = f"{d['new_pref']}_{d['dt']}"
+            nn = self._target_name(d)
             np = os.path.join(os.path.dirname(d["path"]), nn)
             if d["path"] != np and not os.path.exists(np):
                 try: os.rename(d["path"], np); s += 1

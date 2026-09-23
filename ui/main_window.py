@@ -8,6 +8,7 @@ from PyQt5.QtCore import Qt
 
 from ui.tab_ref_aggregator import RefAggregatorTab
 from ui.tab_match import MatchTab
+from ui.tab_match_charts import MatchChartsTab
 from ui.tab_wafer_map import WaferMapTab
 from ui.tab_folder_manager import FolderManagerTab
 from ui.tab_organize_spectra import OrganizeSpectraTab
@@ -36,6 +37,7 @@ class MainWindow(QMainWindow):
         # Create tabs
         self.tab_ref = RefAggregatorTab(self)
         self.tab_match = MatchTab(self)
+        self.tab_match_charts = MatchChartsTab(self)
         self.tab_map = WaferMapTab(self)
         self.tab_folder = FolderManagerTab(self)
         self.tab_organize = OrganizeSpectraTab(self)
@@ -43,6 +45,7 @@ class MainWindow(QMainWindow):
 
         self.tabs.addTab(self.tab_ref, 'REF 数据汇总')
         self.tabs.addTab(self.tab_match, 'Match 匹配')
+        self.tabs.addTab(self.tab_match_charts, 'Match作图')
         self.tabs.addTab(self.tab_map, 'Wafer Map')
         self.tabs.addTab(self.tab_folder, '文件夹管理')
         self.tabs.addTab(self.tab_organize, '光谱整理')
